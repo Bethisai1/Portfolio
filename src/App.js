@@ -913,7 +913,7 @@ const PROJECTS = [
     stack: ["React Native", "Oracle DB", "JWT", "Expo CLI"],
     color: "#2563EB",
     icon: "🍽️",
-    type: "Web",
+    type: "Web App",
     year: "2024",
     problem: "Manual mess management with no digital tracking, leading to errors and inefficiency.",
     solution: "Built a cross-platform app with role-based access, barcode scanning, and real-time tracking.",
@@ -980,7 +980,7 @@ const CAREER_TIMELINE = [
     title: "B.Tech — Computer Science",
     org: "Jayamukhi Institute of Technological Sciences",
     desc: "Graduated with strong foundations in computer science, and software engineering.",
-    achievements: ["🥈 2nd Prize — Crypt Your Mind", "CGPA: 8.4/10"],
+    achievements: ["🥈 2nd Prize — Crypt Your Mind", "CGPA: 7.4/10"],
     color: "#2563EB",
     type: "edu",
   },
@@ -1009,7 +1009,7 @@ const GITHUB_STATS = {
   repos: 28,
   stars: 45,
   forks: 12,
-  contributions: 180,
+  // contributions: 180,
 };
 
 // ─── THEME PROVIDER ─────────────────────────────────────────────────────────
@@ -2764,7 +2764,7 @@ function GitHubStats({ theme }) {
             { label: "Repositories", value: GITHUB_STATS.repos },
             { label: "Stars", value: GITHUB_STATS.stars },
             { label: "Forks", value: GITHUB_STATS.forks },
-            { label: "Contributions", value: GITHUB_STATS.contributions },
+            // { label: "Contributions", value: GITHUB_STATS.contributions },
           ].map((stat, i) => (
             <div
               key={i}
