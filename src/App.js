@@ -3,7 +3,7 @@
  * 
  */
 
-import { useState, useEffect, useRef, useCallback, createContext, useContext, lazy } from "react";
+import { useState, useEffect, useRef, useCallback, createContext, useContext } from "react";
 import profileImage from "./Assets/saibethi.jpeg";
 
 // ─── THEME CONTEXT ──────────────────────────────────────────────────────────
@@ -1128,8 +1128,6 @@ function TypedText() {
 // ─── SIDE DRAWER ─────────────────────────────────────────────────────────────
 
 function SideDrawer({ isOpen, onClose, active, onNav, theme }) {
-  const styles = getThemeStyles(theme);
-
   const navItems = [
     { icon: "🏠", label: "About", id: "about" },
     { icon: "💻", label: "Skills", id: "skills" },
@@ -1385,7 +1383,7 @@ function Navbar({ active, onNav, theme, toggleTheme, onDrawerOpen }) {
           </button>
         </div>
 
-        <ul className="desktop-nav-list" role="list">
+        <ul className="desktop-nav-list">
           {NAV_LINKS.map(link => (
             <li key={link}>
               <button
@@ -1879,7 +1877,7 @@ function Skills({ theme }) {
             color: styles.textMuted, 
             marginBottom: 24,
           }}>
-            // proficiency
+            {"// proficiency"}
           </p>
           <div style={{
             display: "grid",
@@ -3006,7 +3004,7 @@ function EasterEgg({ onClose, theme }) {
           marginBottom: 24,
           fontFamily: "'Fira Code', monospace",
         }}>
-          // Konami code unlocked. Nice reflexes.
+          {"// Konami code unlocked. Nice reflexes."}
         </div>
         <div style={{ 
           fontSize: 13, 
