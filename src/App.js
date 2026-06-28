@@ -1,0 +1,3203 @@
+/**
+ * Sai Bethi — Portfolio v5 (Professional Portfolio)
+ * 
+ */
+
+import { useState, useEffect, useRef, useCallback, createContext, useContext, Suspense, lazy } from "react";
+import profileImage from "./Assets/saibethi.jpeg";
+
+// ─── THEME CONTEXT ──────────────────────────────────────────────────────────
+
+const ThemeContext = createContext({ theme: 'dark', toggleTheme: () => {} });
+
+export function useTheme() {
+  return useContext(ThemeContext);
+}
+
+// ─── FONTS & GLOBAL STYLES ─────────────────────────────────────────────────
+
+const FontLink = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+    
+    *, *::before, *::after { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+    
+    html { 
+      scroll-behavior: smooth; 
+      font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+    }
+    
+    body { 
+      transition: background-color 0.4s ease, color 0.4s ease;
+      overflow-x: hidden;
+    }
+
+    img, svg, video, canvas {
+      max-width: 100%;
+    }
+
+    button, a {
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { 
+      background: var(--scrollbar-track); 
+    }
+    ::-webkit-scrollbar-thumb { 
+      background: var(--scrollbar-thumb); 
+      border-radius: 99px; 
+    }
+    
+    :root {
+      --scrollbar-track: #0A0A0F;
+      --scrollbar-thumb: #2563EB;
+    }
+    
+    [data-theme="light"] {
+      --scrollbar-track: #F8FAFC;
+      --scrollbar-thumb: #2563EB;
+    }
+    
+    /* ─── TEXT SELECTION ─── */
+    ::selection { 
+      background: rgba(37,99,235,0.2);
+      color: inherit;
+    }
+    
+    [data-theme="light"] ::selection {
+      background: rgba(37,99,235,0.15);
+      color: inherit;
+    }
+    
+    /* ─── ANIMATIONS ─── */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    
+    @keyframes slideDrawer {
+      from { transform: translateX(-100%); }
+      to { transform: translateX(0); }
+    }
+    
+    @keyframes overlayFade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37,99,235,0.4); }
+      70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(37,99,235,0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { 
+        animation-duration: 0.01ms !important; 
+        transition-duration: 0.01ms !important; 
+      }
+    }
+    
+    /* ─── GLASSMORPHISM ─── */
+    .glass {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    
+    [data-theme="light"] .glass {
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(37,99,235,0.08);
+    }
+    
+    /* ─── GRADIENT TEXT ─── */
+    .gradient-text {
+      background: linear-gradient(135deg, #2563EB, #0EA5E9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    /* ─── DRAWER STYLES ─── */
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      animation: overlayFade 0.3s ease;
+    }
+    
+    [data-theme="light"] .drawer-overlay {
+      background: rgba(0,0,0,0.3);
+    }
+    
+    .drawer-content {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: min(320px, 85vw);
+      z-index: 201;
+      animation: slideDrawer 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 20px 16px;
+      overflow-y: auto;
+      background: linear-gradient(135deg, #0F172A 0%, #161B22 100%);
+      border-right: 1px solid rgba(37,99,235,0.12);
+      box-shadow: -8px 0 30px rgba(0,0,0,0.5), -2px 0 8px rgba(37,99,235,0.1);
+    }
+    
+    [data-theme="light"] .drawer-content {
+      background: linear-gradient(135deg, #F8FAFC 0%, #F1E8FF 100%);
+      border-right: 1px solid rgba(37,99,235,0.15);
+      box-shadow: -8px 0 30px rgba(0,0,0,0.08), -2px 0 8px rgba(37,99,235,0.12);
+      color: #0F172A;
+    }
+    
+    /* Desktop: completely hide drawer */
+    @media (min-width: 1025px) {
+      .drawer-overlay,
+      .drawer-content {
+        display: none !important;
+      }
+    }
+    
+    .drawer-link {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      color: #94A3B8;
+    }
+    
+    [data-theme="light"] .drawer-link {
+      color: #475569;
+    }
+    
+    .drawer-link:hover,
+    .drawer-link:focus-visible {
+      transform: translateX(6px);
+      color: #F8FAFC;
+      background: rgba(37,99,235,0.12);
+      outline: 2px solid #2563EB;
+      outline-offset: 2px;
+    }
+    
+    [data-theme="light"] .drawer-link:hover,
+    [data-theme="light"] .drawer-link:focus-visible {
+      color: #0F172A;
+      background: rgba(37,99,235,0.06);
+    }
+    
+    .drawer-link.active {
+      color: #2563EB;
+      background: rgba(37,99,235,0.12);
+    }
+    
+    .drawer-divider {
+      height: 1px;
+      margin: 16px 0;
+      background: rgba(255,255,255,0.06);
+    }
+    
+    [data-theme="light"] .drawer-divider {
+      background: rgba(37,99,235,0.06);
+    }
+    
+    .drawer-text {
+      color: #F8FAFC;
+    }
+    
+    [data-theme="light"] .drawer-text {
+      color: #0F172A;
+    }
+    
+    .drawer-secondary-text {
+      color: #CBD5E1;
+    }
+    
+    [data-theme="light"] .drawer-secondary-text {
+      color: #475569;
+    }
+    
+    /* ─── NAVIGATION ─── */
+    .menu-btn {
+      display: none !important;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px 10px;
+      font-size: 22px;
+      border-radius: 8px;
+      color: #E8EDF5;
+      transition: all 0.2s ease;
+    }
+    
+    [data-theme="light"] .menu-btn {
+      color: #0F172A;
+    }
+    
+    .menu-btn:hover,
+    .menu-btn:focus-visible {
+      background: rgba(37,99,235,0.08);
+      outline: 2px solid #2563EB;
+      outline-offset: 2px;
+    }
+    
+    .desktop-nav-list {
+      display: flex !important;
+      gap: 4px;
+      list-style: none;
+      align-items: center;
+    }
+    
+    /* Mobile: show hamburger, hide desktop nav */
+    @media (max-width: 768px) {
+      .menu-btn {
+        display: flex !important;
+      }
+      .desktop-nav-list {
+        display: none !important;
+      }
+    }
+    
+    /* Tablet: show hamburger, hide desktop nav */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .menu-btn {
+        display: flex !important;
+      }
+      .desktop-nav-list {
+        display: none !important;
+      }
+    }
+    
+    /* Desktop: hide hamburger, show desktop nav */
+    @media (min-width: 1025px) {
+      .menu-btn {
+        display: none !important;
+      }
+      .desktop-nav-list {
+        display: flex !important;
+      }
+    }
+    
+    .nav-link {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 18px;
+      border-radius: 8px;
+      color: #94A3B8;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
+    [data-theme="light"] .nav-link {
+      color: #475569;
+    }
+    
+    .nav-link:hover,
+    .nav-link:focus-visible {
+      color: #E8EDF5;
+      background: rgba(37,99,235,0.06);
+      outline: 2px solid #2563EB;
+      outline-offset: 2px;
+    }
+    
+    [data-theme="light"] .nav-link:hover,
+    [data-theme="light"] .nav-link:focus-visible {
+      color: #0F172A;
+    }
+    
+    .nav-link.active {
+      color: #2563EB;
+      background: rgba(37,99,235,0.08);
+    }
+    
+    .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 2px;
+      background: #2563EB;
+      border-radius: 99px;
+    }
+    
+    /* ─── PROJECT GRID ─── */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+    
+    @media (max-width: 1024px) {
+      .projects-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .projects-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+    }
+    
+    .project-card-inner {
+      display: grid;
+      grid-template-columns: 70px 1fr;
+      gap: 20px;
+      min-height: 100%;
+    }
+    
+    .project-footer {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    
+    [data-theme="light"] .project-footer {
+      border-top: 1px solid rgba(37,99,235,0.06);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-mockup {
+      display: flex;
+    }
+
+    .modal-impact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    
+    @media (max-width: 640px) {
+      .project-card-inner {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+      .project-footer {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+    
+    /* ─── RESPONSIVE SECTIONS ─── */
+    @media (max-width: 768px) {
+      .hero-content {
+        flex-direction: column-reverse;
+        text-align: center;
+        gap: 30px !important;
+      }
+      .hero-text {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+      .hero-stats {
+        justify-content: center;
+        width: 100%;
+      }
+      .hero-stats > div {
+        flex: 1;
+        min-width: 180px;
+      }
+    }
+    
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .hero-content {
+        flex-direction: column-reverse;
+        text-align: center;
+        gap: 34px !important;
+      }
+      .hero-text {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+      .hero-stats {
+        justify-content: center;
+        width: 100%;
+      }
+      .hero-stats > div {
+        flex: 1;
+        min-width: 180px;
+      }
+    }
+    
+    /* ─── SECTION DIVIDERS ─── */
+    .section-divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(37,99,235,0.15), transparent);
+      margin: 0 auto;
+      max-width: 1200px;
+    }
+    
+    [data-theme="light"] .section-divider {
+      background: linear-gradient(90deg, transparent, rgba(37,99,235,0.08), transparent);
+    }
+    
+    /* ─── SKELETON LOADING ─── */
+    .skeleton {
+      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
+      border-radius: 8px;
+    }
+    
+    [data-theme="light"] .skeleton {
+      background: linear-gradient(90deg, rgba(37,99,235,0.04) 25%, rgba(37,99,235,0.08) 50%, rgba(37,99,235,0.04) 75%);
+      background-size: 200% 100%;
+    }
+    
+    /* ─── OPEN TO WORK BADGE ─── */
+    .open-to-work {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.12);
+      border-radius: 99px;
+      padding: 6px 16px;
+      font-family: 'Fira Code', monospace;
+      font-size: 11px;
+      color: #10B981;
+      font-weight: 600;
+    }
+    
+    .open-to-work::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10B981;
+      animation: pulse-ring 2s infinite;
+      display: inline-block;
+    }
+    
+    /* ─── CTA BUTTONS ─── */
+    .cta-primary {
+      background: #2563EB;
+      color: #fff;
+      font-weight: 700;
+      font-size: 15px;
+      padding: 14px 32px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 20px rgba(37,99,235,0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    
+    .cta-primary:hover,
+    .cta-primary:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(37,99,235,0.4);
+      outline: 2px solid #2563EB;
+      outline-offset: 2px;
+    }
+    
+    .cta-secondary {
+      background: transparent;
+      color: #2563EB;
+      border: 2px solid rgba(37,99,235,0.2);
+      font-weight: 600;
+      font-size: 14px;
+      padding: 12px 28px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    
+    .cta-secondary:hover,
+    .cta-secondary:focus-visible {
+      background: rgba(37,99,235,0.06);
+      border-color: #2563EB;
+      outline: 2px solid #2563EB;
+      outline-offset: 2px;
+    }
+
+    @media (max-width: 1024px) {
+      section {
+        padding-left: 24px !important;
+        padding-right: 24px !important;
+      }
+
+      .hero-content {
+        flex-direction: column-reverse !important;
+        text-align: center;
+        gap: 34px !important;
+      }
+
+      .hero-text {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        min-width: 0 !important;
+      }
+
+      .hero-content > div:last-child {
+        width: 100%;
+      }
+
+      .hero-content > div:last-child > div {
+        width: clamp(220px, 48vw, 300px) !important;
+        height: clamp(220px, 48vw, 300px) !important;
+      }
+
+      .hero-stats {
+        justify-content: center;
+        width: 100%;
+      }
+
+      .hero-stats > div {
+        flex: 1 1 160px;
+        min-width: 150px;
+      }
+
+      .modal-impact-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      nav[aria-label="Primary navigation"] {
+        height: 64px !important;
+        padding: 0 16px !important;
+      }
+
+      .nav-actions {
+        gap: 8px !important;
+      }
+
+      .nav-actions .cta-primary {
+        display: none !important;
+      }
+
+      .hero-stats > div {
+        flex: 1 1 calc(50% - 14px) !important;
+        min-width: 130px !important;
+      }
+
+      .cta-primary,
+      .cta-secondary {
+        justify-content: center;
+      }
+
+      .projects-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+
+      .modal-mockup {
+        flex-direction: column !important;
+        text-align: center;
+        padding: 20px 16px !important;
+      }
+    }
+
+    @media (max-width: 640px) {
+      section {
+        padding: 72px 16px !important;
+      }
+
+      #about {
+        min-height: auto !important;
+        padding-top: 96px !important;
+      }
+
+      .open-to-work {
+        font-size: 10px !important;
+        padding: 6px 12px !important;
+      }
+
+      .hero-content {
+        gap: 28px !important;
+      }
+
+      .hero-text h1 {
+        letter-spacing: 0 !important;
+      }
+
+      .hero-text p {
+        max-width: 100% !important;
+      }
+
+      .hero-text > div:nth-of-type(3) {
+        justify-content: center;
+        width: 100%;
+      }
+
+      .hero-text > div:nth-of-type(3) .cta-primary,
+      .hero-text > div:nth-of-type(3) .cta-secondary {
+        flex: 1 1 150px;
+        min-width: 0;
+        width: auto;
+      }
+
+      .hero-text > div:nth-of-type(3) .cta-primary {
+        padding: 12px 20px;
+        font-size: 14px;
+      }
+
+      .hero-text > div:nth-of-type(3) .cta-secondary {
+        padding: 10px 18px;
+        font-size: 14px;
+      }
+
+      .hero-stats {
+        gap: 16px !important;
+        margin-top: 36px !important;
+        padding-top: 22px !important;
+      }
+
+      .project-card-inner > div:first-child {
+        align-items: flex-start !important;
+        flex-direction: row !important;
+      }
+
+      .project-footer > div {
+        margin-left: 0 !important;
+        width: 100%;
+      }
+
+      .drawer-content {
+        width: min(300px, 88vw);
+        padding: 26px 18px;
+      }
+
+      [role="dialog"] {
+        padding: 12px !important;
+      }
+
+      [role="dialog"] > div {
+        border-radius: 16px !important;
+        padding: 28px 18px !important;
+      }
+
+      [role="dialog"] h2 {
+        padding-right: 28px;
+      }
+
+      footer {
+        padding: 28px 16px !important;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .hero-content > div:last-child > div {
+        width: min(220px, 72vw) !important;
+        height: min(220px, 72vw) !important;
+      }
+
+      .hero-stats {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hero-stats > div {
+        min-width: 0 !important;
+      }
+
+      .hero-text > div:nth-of-type(3) {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 12px;
+      }
+
+      .hero-text > div:nth-of-type(3) > div {
+        justify-content: center;
+        margin-left: 0 !important;
+        width: 100%;
+      }
+
+      .hero-text > div:nth-of-type(3) .cta-primary,
+      .hero-text > div:nth-of-type(3) .cta-secondary {
+        flex: 0 1 auto;
+        width: auto;
+        min-width: 0;
+        max-width: 100%;
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+    }
+  `}</style>
+);
+
+// ─── DATA ────────────────────────────────────────────────────────────────────
+
+const TYPED_ROLES = [
+  "React Native Developer",
+  "React JS Developer",
+  "Full Stack Developer",
+  "Node.js & Express Developer",
+];
+
+const TECH_LOGOS = [
+  { name: "React Native", src: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" },
+  { name: "React.js", src: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" },
+  { name: "JavaScript", src: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" },
+  { name: "Node.js", src: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" },
+  { name: "Express.js", src: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg" },
+  { name: "Redux", src: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redux/redux-original.svg" },
+  { name: "Git", src: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg" },
+  { name: "Oracle", src: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/oracle/oracle-original.svg" },
+  { name: "MySQL", src: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg" },
+  { name: "Postman", src: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postman/postman-original.svg" },
+  { name: "Expo", src: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/expo/expo-original.svg" },
+];
+
+const SKILLS_BARS = [
+  { name: "React Native", level: 95 },
+  { name: "React.js", level: 92 },
+  { name: "JavaScript", level: 90 },
+  { name: "Node.js", level: 88 },
+  { name: "Express.js", level: 86 },
+  { name: "Oracle DB", level: 82 },
+  { name: "Git & CI", level: 88 },
+];
+
+const LINKEDIN_URL = "https://www.linkedin.com/in/saibethi";
+const GITHUB_URL = "https://github.com/Bethisai1";
+const RESUME_URL = "https://drive.google.com/drive/folders/1wANvcGO5uuihHJVDjCAltXZ124L96G3X?usp=drive_link";
+
+// ─── PROJECTS WITH METRICS ────────────────────────────────────────────────
+
+const PROJECTS = [
+  {
+    id: "afmc",
+    title: "AFMC Mess App",
+    subtitle: "Armed Forces Medical College",
+    stack: ["React Native", "MYSQL", "JWT", "Expo CLI"],
+    color: "#2563EB",
+    icon: "🍽️",
+    type: "Mobile",
+    problem: "Manual mess management with no digital tracking, leading to errors and inefficiency.",
+    solution: "Built a cross-platform app with role-based access, barcode scanning, and real-time tracking.",
+    impact: "Reduced manual errors by 85%, serving 200+ daily users with 4.8 rating.",
+    summary: "Cross-platform mess management system with role-based access, barcode asset tracking, and JWT-secured REST APIs serving 200+ daily users.",
+    highlights: ["3+ User Tiers", "Barcode Scanning", "Play Store"],
+    githubUrl: null,
+    bgColor: "rgba(37,99,235,0.08)",
+    isLive: true,
+    metrics: ["200+ Daily Users", "4.8 Rating", "85% Error Reduction"],
+    screenshot: "📱",
+    mockup: "mobile",
+  },
+  {
+    id: "txn",
+    title: "Transaction App",
+    subtitle: "Fintech Platform",
+    stack: ["React Native", "PDF Gen", "REST API"],
+    color: "#0EA5E9",
+    icon: "💳",
+    type: "Mobile App",
+    year: "2024",
+    problem: "Manual transaction tracking with no automated reporting or PDF generation.",
+    solution: "Developed a feature-rich app with custom PDF export, file uploads, and role-based forms.",
+    impact: "Processing 1000+ monthly transactions with 50+ active users.",
+    summary: "Feature-rich transaction manager with custom PDF export, file uploads, and role-based form validation processing 1000+ monthly transactions.",
+    highlights: ["Custom PDF Engine", "File Uploads", "Role-based Security"],
+    githubUrl: null,
+    liveUrl: null,
+    playStoreUrl: null,
+    bgColor: "rgba(14,165,233,0.08)",
+    isLive: false,
+    metrics: ["1000+ Monthly Transactions", "50+ Active Users", "PDF Automation"],
+    screenshot: "📊",
+    mockup: "mobile",
+  },
+  {
+    id: "capex",
+    title: "CAPEX Automation",
+    subtitle: "Finance & Procurement",
+    stack: ["React.js", "Node.js", "Express", "Oracle DB"],
+    color: "#0EA5E9",
+    icon: "📊",
+    type: "Web App",
+    year: "2024",
+    problem: "Slow approval process with manual CER number generation and tracking.",
+    solution: "Built end-to-end workflow with multi-level routing and automated CER generation.",
+    impact: "Reduced approval time by 40%, serving 100+ users across departments.",
+    summary: "End-to-end Capital Expenditure approval workflow with multi-level routing and automated CER number generation, reducing approval time by 40%.",
+    highlights: ["Multi-level Approval", "Automated CER", "Live Dashboards"],
+    githubUrl: null,
+    liveUrl: "https://capex.globalsparkteksolutions.com/",
+    playStoreUrl: null,
+    bgColor: "rgba(14,165,233,0.08)",
+    isLive: true,
+    metrics: ["40% Faster Approvals", "100+ Users", "Automated CER"],
+    screenshot: "🖥️",
+    mockup: "web",
+  },
+  {
+    id: "afmc",
+    title: "AFMC Mess App",
+    subtitle: "Armed Forces Medical College",
+    stack: ["React Native", "Oracle DB", "JWT", "Expo CLI"],
+    color: "#2563EB",
+    icon: "🍽️",
+    type: "Web",
+    year: "2024",
+    problem: "Manual mess management with no digital tracking, leading to errors and inefficiency.",
+    solution: "Built a cross-platform app with role-based access, barcode scanning, and real-time tracking.",
+    impact: "Reduced manual errors by 85%, serving 200+ daily users with 4.8 rating.",
+    summary: "Cross-platform mess management system with role-based access, barcode asset tracking, and JWT-secured REST APIs serving 200+ daily users.",
+    highlights: ["3+ User Tiers", "Barcode Scanning", "Play Store"],
+    githubUrl: null,
+    liveUrl: "https://afmcmess.globalsparkteksolutions.com/",
+    playStoreUrl: "https://play.google.com/store/apps/details?id=com.afmc.mess",
+    bgColor: "rgba(37,99,235,0.08)",
+    isLive: true,
+    metrics: ["200+ Daily Users", "4.8 Rating", "85% Error Reduction"],
+    screenshot: "📱",
+    mockup: "mobile",
+  },
+  {
+    id: "gst",
+    title: "GlobalSparkTek.com",
+    subtitle: "Corporate Website",
+    stack: ["React.js", "SEO", "GoDaddy", "SSL"],
+    color: "#2563EB",
+    icon: "🌐",
+    type: "Web App",
+    year: "2024",
+    problem: "Outdated company website with poor SEO and performance scores.",
+    solution: "Rebuilt with modern React stack, SEO optimization, and performance tuning.",
+    impact: "Achieved 95+ Lighthouse score and 40% traffic growth.",
+    summary: "End-to-end company website with SEO optimization, schema markup, and Lighthouse-optimized performance scoring 95+ across all metrics.",
+    highlights: ["Lighthouse 95+", "SEO Optimized", "Full Stack"],
+    githubUrl: null,
+    liveUrl: "https://www.globalsparkteksolutions.com",
+    playStoreUrl: null,
+    bgColor: "rgba(37,99,235,0.08)",
+    isLive: true,
+    metrics: ["95+ Lighthouse Score", "40% Traffic Growth", "SEO Optimized"],
+    screenshot: "🌐",
+    mockup: "web",
+  },
+];
+
+// ─── CAREER TIMELINE ──────────────────────────────────────────────────────
+
+const CAREER_TIMELINE = [
+  {
+    year: "2024 – Present",
+    title: "Associate Consultant",
+    org: "Global Spark Tek Solutions",
+    desc: "Leading cross-platform mobile and web development. Built 4+ production apps serving 200+ daily users.",
+    achievements: ["🏆 Best Learning Star 2024 & 2025", "35% Load Time Reduction", "Led team of 4"],
+    color: "#2563EB",
+    type: "work",
+  },
+  {
+    year: "2024 – Sep-2024",
+    title: "Associate Trainee",
+    org: "Global Spark Tek Solutions",
+    desc: "Started as a junior developer, quickly progressed to leading projects and mentoring team members.",
+    achievements: ["🎯 100% Project Delivery Rate", "Client Satisfaction Score: 4.8/5"],
+    color: "#0EA5E9",
+    type: "work",
+  },
+  {
+    year: "2019 – 2023",
+    title: "B.Tech — Computer Science",
+    org: "Jayamukhi Institute of Technological Sciences",
+    desc: "Graduated with strong foundations in computer science, and software engineering.",
+    achievements: ["🥈 2nd Prize — Crypt Your Mind", "CGPA: 8.4/10"],
+    color: "#2563EB",
+    type: "edu",
+  },
+];
+
+// ─── CERTIFICATIONS ──────────────────────────────────────────────────────
+
+const CERTIFICATIONS = [
+  { name: "React Native with Expo CLI", issuer: "Meta · Coursera", icon: "📱", link: "#" },
+  { name: "Version Control — Git & GitHub", issuer: "Meta · Coursera", icon: "🔀", link: "#" },
+  { name: "Java Full Stack Development", issuer: "Sathya Technologies", icon: "☕", link: "#" },
+];
+
+// ─── ACHIEVEMENTS ──────────────────────────────────────────────────────
+
+const ACHIEVEMENTS = [
+  { icon: "🏆", title: "Best Learning Star 2024 & 2025", desc: "Recognized for exceptional performance and continuous learning" },
+  { icon: "🥈", title: "2nd Prize — Crypt Your Mind", desc: "Competitive coding and cryptography competition" },
+  { icon: "📱", title: "4 Apps Shipped to Production", desc: "Successfully delivered 4+ cross-platform applications" },
+  { icon: "🚀", title: "40% Process Improvement", desc: "Reduced CAPEX approval time through automation" },
+];
+
+// ─── GITHUB STATS ──────────────────────────────────────────────────────
+
+const GITHUB_STATS = {
+  repos: 28,
+  stars: 45,
+  forks: 12,
+  contributions: 180,
+};
+
+// ─── THEME PROVIDER ─────────────────────────────────────────────────────────
+
+function ThemeProvider({ children }) {
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('portfolio-theme');
+    return saved || 'dark';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('portfolio-theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+// ─── THEME STYLES ───────────────────────────────────────────────────────────
+
+function getThemeStyles(theme) {
+  const isDark = theme === 'dark';
+  return {
+    background: isDark ? '#0A0A0F' : '#FFFFFF',
+    backgroundSecondary: isDark ? '#0F0F1A' : '#F8FAFC',
+    backgroundCard: isDark ? 'rgba(20,20,40,0.6)' : 'rgba(255,255,255,0.85)',
+    backgroundCardHover: isDark ? 'rgba(30,30,60,0.8)' : 'rgba(255,255,255,0.98)',
+    border: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(37,99,235,0.08)',
+    borderHover: isDark ? 'rgba(37,99,235,0.3)' : 'rgba(37,99,235,0.2)',
+    text: isDark ? '#F8FAFC' : '#0F172A',
+    textSecondary: isDark ? '#CBD5E1' : '#475569',
+    textMuted: isDark ? '#64748B' : '#94A3B8',
+    shadow: isDark ? '0 20px 60px rgba(0,0,0,0.5)' : '0 20px 60px rgba(37,99,235,0.06)',
+    cardShadow: isDark ? '0 8px 30px rgba(0,0,0,0.3)' : '0 8px 30px rgba(37,99,235,0.04)',
+    cardHoverShadow: isDark ? '0 16px 50px rgba(37,99,235,0.1)' : '0 16px 50px rgba(37,99,235,0.06)',
+  };
+}
+
+// ─── SKELETON LOADER ──────────────────────────────────────────────────────
+
+function SkeletonLoader() {
+  return (
+    <div style={{ padding: "100px 28px", maxWidth: 1200, margin: "0 auto" }}>
+      <div className="skeleton" style={{ height: 40, width: "60%", marginBottom: 20 }} />
+      <div className="skeleton" style={{ height: 20, width: "40%", marginBottom: 40 }} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px,1fr))", gap: 24 }}>
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="skeleton" style={{ height: 200, borderRadius: 16 }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── TYPED TEXT ──────────────────────────────────────────────────────────────
+
+function TypedText() {
+  const [roleIdx, setRoleIdx] = useState(0);
+  const [displayed, setDisplayed] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    const current = TYPED_ROLES[roleIdx];
+    if (paused) {
+      const t = setTimeout(() => { setPaused(false); setDeleting(true); }, 2000);
+      return () => clearTimeout(t);
+    }
+    if (!deleting) {
+      if (displayed.length < current.length) {
+        const t = setTimeout(() => setDisplayed(current.slice(0, displayed.length + 1)), 50);
+        return () => clearTimeout(t);
+      } else {
+        setPaused(true);
+      }
+    } else {
+      if (displayed.length > 0) {
+        const t = setTimeout(() => setDisplayed(displayed.slice(0, -1)), 30);
+        return () => clearTimeout(t);
+      } else {
+        setDeleting(false);
+        setRoleIdx(i => (i + 1) % TYPED_ROLES.length);
+      }
+    }
+  }, [displayed, deleting, paused, roleIdx]);
+
+  return (
+    <div style={{
+      fontSize: "clamp(20px,3.5vw,32px)",
+      fontWeight: 700,
+      minHeight: "1.4em",
+      letterSpacing: "-0.02em",
+      fontFamily: "'Space Grotesk', sans-serif",
+    }}>
+      <span className="gradient-text">{displayed}</span>
+      <span style={{
+        display: "inline-block",
+        width: 3,
+        height: "1em",
+        background: "#2563EB",
+        marginLeft: 4,
+        verticalAlign: "middle",
+        animation: "blink 0.9s step-end infinite",
+        borderRadius: 2,
+      }} />
+    </div>
+  );
+}
+
+// ─── SIDE DRAWER ─────────────────────────────────────────────────────────────
+
+function SideDrawer({ isOpen, onClose, active, onNav, theme }) {
+  const styles = getThemeStyles(theme);
+
+  const navItems = [
+    { icon: "🏠", label: "About", id: "about" },
+    { icon: "💻", label: "Skills", id: "skills" },
+    { icon: "🚀", label: "Projects", id: "projects" },
+    { icon: "📜", label: "Journey", id: "journey" },
+    { icon: "📧", label: "Contact", id: "contact" },
+  ];
+
+  const socialLinks = [
+    { icon: "in", label: "LinkedIn", url: LINKEDIN_URL, color: "#0A66C2" },
+    { icon: "⌥", label: "GitHub", url: GITHUB_URL, color: "#2563EB" },
+    // { icon: "📧", label: "Email", url: "mailto:bethi.sai19@gmail.com", color: "#0EA5E9" },
+  ];
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div className="drawer-overlay" onClick={onClose} role="button" aria-label="Close menu" />
+      <div className="drawer-content" role="dialog" aria-modal="true" aria-label="Navigation menu">
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 28,
+        }}>
+          <div style={{
+            fontFamily: "'Fira Code', monospace",
+            fontSize: 18,
+            fontWeight: 700,
+            color: theme === 'light' ? "#0F172A" : "#F8FAFC",
+          }}>
+            <span className="gradient-text">{"<"}</span>
+            SaiBethi
+            <span className="gradient-text">{"/>"}</span>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close menu"
+            style={{
+              background: "none",
+              border: "none",
+              fontSize: 22,
+              color: theme === 'light' ? "#64748B" : "#94A3B8",
+              cursor: "pointer",
+              padding: "4px 8px",
+              transition: "transform 0.3s ease",
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = "rotate(90deg)"}
+            onMouseLeave={e => e.currentTarget.style.transform = "rotate(0)"}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div style={{ marginBottom: 8 }}>
+          <div style={{
+            width: 72,
+            height: 72,
+            borderRadius: "50%",
+            overflow: "hidden",
+            marginBottom: 10,
+            border: `2px solid rgba(37,99,235,0.3)`,
+          }}>
+            <img
+              src={profileImage}
+              alt="Sai Bethi"
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </div>
+          <div style={{
+            fontSize: 17,
+            fontWeight: 700,
+            color: theme === 'light' ? "#0F172A" : "#F8FAFC",
+            fontFamily: "'Space Grotesk', sans-serif",
+          }}>
+            Sai Bethi
+          </div>
+          <div style={{
+            fontSize: 12,
+            color: theme === 'light' ? "#64748B" : "#CBD5E1",
+            fontFamily: "'Fira Code', monospace",
+            marginTop: 2,
+          }}>
+            React Native Developer
+          </div>
+          <div className="open-to-work" style={{ marginTop: 2, display: "inline-flex" }}>
+            Open to Opportunities
+          </div>
+
+        <div className="drawer-divider" style={{ margin: "8px 0" }} />
+        <nav style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 4 }}>
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => {
+                onNav(item.label);
+                onClose();
+              }}
+              className={`drawer-link ${active === item.label ? "active" : ""}`}
+              aria-current={active === item.label ? "page" : undefined}
+            >
+              <span style={{ fontSize: 18, width: 28 }} aria-hidden="true">{item.icon}</span>
+              {item.label}
+            </button>
+          ))}
+          </nav>
+          
+        <div className="drawer-divider" />
+        <div style={{ marginTop: 6 }}>
+          <p style={{
+            fontSize: 10,
+            color: theme === 'light' ? "#64748B" : "#94A3B8",
+            fontWeight: 600,
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            marginBottom: 12,
+            fontFamily: "'Fira Code', monospace",
+          }}>
+            Connect
+          </p>
+          <div style={{ display: "flex", gap: 10 }}>
+            {socialLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={link.label}
+                style={{
+                  minWidth: 40,
+                  height: 40,
+                  borderRadius: 8,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: "#94A3B8",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  transition: "all 0.3s ease",
+                  textDecoration: "none",
+                  padding: "0 10px",
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.color = link.color;
+                  e.currentTarget.style.borderColor = link.color;
+                  e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.color = "#94A3B8";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                {link.label === "GitHub" ? "GitHub" : link.icon}
+              </a>
+            ))}
+          </div>
+          </div>
+           </div>
+
+        <div style={{
+          marginTop: 20,
+          paddingTop: 14,
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+        }}>
+          <div style={{
+            fontFamily: "'Fira Code', monospace",
+            fontSize: 10,
+            color: "#64748B",
+            lineHeight: 1.6,
+            opacity: 0.6,
+          }}>
+            {`// crafted with ♥\n// Sai Bethi · 2025`}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── NAVBAR ──────────────────────────────────────────────────────────────────
+
+const NAV_LINKS = ["About", "Skills", "Projects", "Journey", "Contact"];
+
+function Navbar({ active, onNav, theme, toggleTheme, onDrawerOpen }) {
+  const [scrolled, setScrolled] = useState(false);
+  const styles = getThemeStyles(theme);
+  const isDark = theme === 'dark';
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <header
+      role="banner"
+      style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+        transition: "all 0.4s ease",
+        background: scrolled 
+          ? isDark ? "rgba(10,10,15,0.92)" : "rgba(255,255,255,0.92)"
+          : "transparent",
+        backdropFilter: scrolled ? "blur(24px)" : "none",
+        borderBottom: scrolled ? `1px solid ${styles.border}` : "1px solid transparent",
+      }}
+    >
+      <nav
+        role="navigation"
+        aria-label="Primary navigation"
+        style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "0 24px",
+          height: 70,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button
+            onClick={onDrawerOpen}
+            aria-label="Open navigation menu"
+            className="menu-btn"
+          >
+            ☰
+          </button>
+
+          <button
+            onClick={() => onNav("About")}
+            aria-label="Go to top"
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "'Fira Code', monospace",
+              fontSize: 17,
+              fontWeight: 700,
+              color: styles.text,
+              padding: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            {/* <span className="gradient-text">{'<'}</span> */}
+            <span>SaiBethi</span>
+            {/* <span className="gradient-text">{'/>'}</span> */}
+          </button>
+        </div>
+
+        <ul className="desktop-nav-list" role="list">
+          {NAV_LINKS.map(link => (
+            <li key={link}>
+              <button
+                onClick={() => onNav(link)}
+                className={`nav-link ${active === link ? "active" : ""}`}
+                aria-current={active === link ? "page" : undefined}
+              >
+                {link}
+              </button>
+            </li>
+          ))}
+        </ul>
+
+        <div className="nav-actions">
+          <button
+            onClick={toggleTheme}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            style={{
+              background: isDark ? "rgba(255,255,255,0.05)" : "rgba(37,99,235,0.05)",
+              border: `1px solid ${styles.border}`,
+              cursor: "pointer",
+              fontSize: 16,
+              padding: "6px 12px",
+              borderRadius: 8,
+              transition: "all 0.2s ease",
+              color: styles.text,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              minWidth: 70,
+              justifyContent: "center",
+              fontWeight: 600,
+            }}
+          >
+            <span aria-hidden="true">{isDark ? '🌙' : '☀️'}</span>
+            <span style={{ fontSize: 11 }}>
+              {isDark ? 'Dark' : 'Light'}
+            </span>
+          </button>
+
+          <a
+            href={RESUME_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Download resume"
+            className="cta-primary"
+            style={{ fontSize: 12, padding: "8px 18px" }}
+          >
+            Resume ↗
+          </a>
+        </div>
+      </nav>
+    </header>
+  );
+}
+
+// ─── HERO ────────────────────────────────────────────────────────────────────
+
+function Hero({ onNav, theme }) {
+  const styles = getThemeStyles(theme);
+
+  return (
+    <section
+      id="about"
+      aria-labelledby="hero-heading"
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        padding: "120px 28px 80px",
+        position: "relative",
+        overflow: "hidden",
+        background: styles.background,
+      }}
+    >
+      <div style={{ maxWidth: 1200, margin: "0 auto", width: "100%", position: "relative", zIndex: 1 }}>
+        <div className="hero-content" style={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 60,
+          flexWrap: "wrap",
+        }}>
+          <div className="hero-text" style={{ flex: 1, minWidth: 300 }}>
+            <div className="open-to-work" style={{ marginBottom: 28 }}>
+              Open to Opportunities
+            </div>
+
+            <h1
+              id="hero-heading"
+              style={{
+                fontSize: "clamp(36px,7vw,72px)",
+                fontWeight: 900,
+                lineHeight: 1.05,
+                letterSpacing: "-0.03em",
+                marginBottom: 16,
+              }}
+            >
+              <span style={{ 
+                color: styles.textMuted, 
+                fontSize: "clamp(16px,2vw,22px)", 
+                fontWeight: 600, 
+                display: "block", 
+                marginBottom: 8,
+                letterSpacing: "0.02em",
+              }}>
+                Hi, I'm
+              </span>
+              <span className="gradient-text">Sai Bethi</span>
+            </h1>
+
+            <div style={{ marginBottom: 20 }}>
+              <TypedText />
+            </div>
+
+            <p style={{
+              fontSize: "clamp(16px,1.8vw,19px)",
+              color: styles.textSecondary,
+              lineHeight: 1.8,
+              maxWidth: 500,
+              marginBottom: 36,
+            }}>
+              Associate Consultant at{" "}
+              <a
+                href="https://www.globalsparkteksolutions.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ 
+                  color: "#2563EB", 
+                  textDecoration: "none", 
+                  fontWeight: 700,
+                  borderBottom: `2px solid rgba(37,99,235,0.2)`,
+                }}
+              >
+                Global Spark Tek
+              </a>
+              — building production mobile apps and enterprise web systems that solve real business problems.
+            </p>
+
+            <div style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 14,
+              alignItems: "center",
+            }}>
+              <button
+                onClick={() => onNav("Projects")}
+                className="cta-primary"
+              >
+                View My Work
+                <span style={{ fontSize: 18 }}>→</span>
+              </button>
+
+              <a
+                href="mailto:bethi.sai19@gmail.com"
+                className="cta-secondary"
+              >
+                Hire Me
+              </a>
+
+              <div style={{ display: "flex", gap: 10, marginLeft: 4 }}>
+                <a
+                  href={LINKEDIN_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                  style={{
+                    color: styles.textMuted,
+                    fontSize: 20,
+                    textDecoration: "none",
+                    transition: "all 0.2s ease",
+                    width: 40,
+                    height: 40,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: 8,
+                    border: `1px solid ${styles.border}`,
+                    fontWeight: 700,
+                  }}
+                  onMouseEnter={e => { 
+                    e.currentTarget.style.color = "#0A66C2";
+                    e.currentTarget.style.borderColor = "#0A66C2";
+                    e.currentTarget.style.background = "rgba(10,102,194,0.06)";
+                  }}
+                  onMouseLeave={e => { 
+                    e.currentTarget.style.color = styles.textMuted;
+                    e.currentTarget.style.borderColor = styles.border;
+                    e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  in
+                </a>
+                <a
+                  href={GITHUB_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="GitHub"
+                  style={{
+                    color: styles.textMuted,
+                    fontSize: 14,
+                    textDecoration: "none",
+                    transition: "all 0.2s ease",
+                    minWidth: 84,
+                    height: 40,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: 8,
+                    border: `1px solid ${styles.border}`,
+                    fontWeight: 700,
+                    padding: "0 12px",
+                  }}
+                  onMouseEnter={e => { 
+                    e.currentTarget.style.color = "#fff";
+                    e.currentTarget.style.borderColor = "#2563EB";
+                    e.currentTarget.style.background = "#2563EB";
+                  }}
+                  onMouseLeave={e => { 
+                    e.currentTarget.style.color = styles.textMuted;
+                    e.currentTarget.style.borderColor = styles.border;
+                    e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  GitHub
+                </a>
+              </div>
+            </div>
+
+            <div className="hero-stats" style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 40,
+              marginTop: 52,
+              paddingTop: 28,
+              borderTop: `1px solid ${styles.border}`,
+            }}>
+              {[
+                { num: "4+", label: "Apps Shipped" },
+                { num: "2×", label: "Best Learning Star" },
+                { num: "200+", label: "Daily Active Users" },
+                { num: "40%", label: "Process Improvement" },
+              ].map(({ num, label }) => (
+                <div key={label}>
+                  <div style={{
+                    fontSize: "clamp(28px,4vw,38px)",
+                    fontWeight: 900,
+                    color: "#2563EB",
+                    lineHeight: 1,
+                  }}>
+                    {num}
+                  </div>
+                  <div style={{ 
+                    fontSize: 13, 
+                    color: styles.textMuted, 
+                    marginTop: 4, 
+                    fontWeight: 500,
+                  }}>
+                    {label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{
+            flex: "0 0 auto",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}>
+            <div
+              style={{
+                position: "relative",
+                display: "inline-flex",
+                width: 300,
+                height: 300,
+                borderRadius: "50%",
+                padding: 4,
+                background: "linear-gradient(135deg, #2563EB, #0EA5E9)",
+              }}
+            >
+              <div style={{
+                width: "100%",
+                height: "100%",
+                borderRadius: "50%",
+                overflow: "hidden",
+                background: styles.backgroundCard,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 4,
+              }}>
+                <img
+                  src={profileImage}
+                  alt="Sai Bethi - React Native Developer"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: "50%",
+                  }}
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── SKILLS ──────────────────────────────────────────────────────────────────
+
+function SkillBar({ skill, visible, theme }) {
+  const styles = getThemeStyles(theme);
+  return (
+    <div style={{ 
+      marginBottom: 20, 
+      animation: visible ? "fadeUp 0.6s ease" : "none",
+    }}>
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        marginBottom: 6,
+        alignItems: "center",
+      }}>
+        <span style={{ 
+          fontSize: 14, 
+          fontWeight: 600, 
+          color: styles.text,
+          fontFamily: "'Space Grotesk', sans-serif",
+        }}>
+          {skill.name}
+        </span>
+        <span style={{ 
+          fontFamily: "'Fira Code', monospace", 
+          fontSize: 12, 
+          color: "#2563EB",
+          fontWeight: 600,
+        }}>
+          {skill.level}%
+        </span>
+      </div>
+      <div style={{ 
+        background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(37,99,235,0.06)', 
+        borderRadius: 99,
+        height: 6,
+        overflow: "hidden",
+      }}>
+        <div
+          style={{
+            height: "100%",
+            width: visible ? `${skill.level}%` : "0%",
+            background: "linear-gradient(90deg, #2563EB, #0EA5E9)",
+            borderRadius: 99,
+            transition: "width 1.2s cubic-bezier(0.16,1,0.3,1)",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function TechLogo({ name, src, theme }) {
+  const [hovered, setHovered] = useState(false);
+  const styles = getThemeStyles(theme);
+  const isDark = theme === 'dark';
+  
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 8,
+        padding: "16px 14px",
+        borderRadius: 12,
+        background: hovered ? styles.backgroundCardHover : "transparent",
+        border: `1px solid ${hovered ? "rgba(37,99,235,0.15)" : "transparent"}`,
+        transition: "all 0.3s ease",
+        transform: hovered ? "translateY(-4px)" : "none",
+        cursor: "default",
+        minWidth: 70,
+      }}
+    >
+      <img
+        src={src}
+        alt={name}
+        width={38}
+        height={38}
+        loading="lazy"
+        style={{
+          objectFit: "contain",
+          filter: isDark ? (hovered ? "none" : "grayscale(20%) brightness(0.85)") : (hovered ? "none" : "grayscale(15%) brightness(0.95)"),
+          transition: "all 0.3s ease",
+          transform: hovered ? "scale(1.1)" : "scale(1)",
+        }}
+        onError={e => {
+          e.currentTarget.style.display = "none";
+        }}
+      />
+      <span style={{
+        fontSize: 11,
+        fontWeight: 500,
+        color: hovered ? styles.text : styles.textMuted,
+        textAlign: "center",
+        transition: "color 0.3s",
+      }}>
+        {name}
+      </span>
+    </div>
+  );
+}
+
+function Skills({ theme }) {
+  const [visible, setVisible] = useState(false);
+  const sectionRef = useRef(null);
+  const styles = getThemeStyles(theme);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <section
+      id="skills"
+      ref={sectionRef}
+      aria-labelledby="skills-heading"
+      style={{ 
+        padding: "100px 28px", 
+        background: styles.backgroundSecondary,
+        position: "relative",
+      }}
+    >
+      <div style={{ maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
+        <div style={{ marginBottom: 40 }}>
+          <p style={{
+            fontSize: 11,
+            color: "#2563EB",
+            fontWeight: 700,
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            marginBottom: 10,
+            fontFamily: "'Fira Code', monospace",
+          }}>
+            What I work with
+          </p>
+          <h2 id="skills-heading" style={{
+            fontSize: "clamp(28px,4.5vw,40px)",
+            fontWeight: 900,
+            lineHeight: 1.1,
+            color: styles.text,
+            fontFamily: "'Space Grotesk', sans-serif",
+          }}>
+            Skills &amp; <span className="gradient-text">Tech Stack</span>
+          </h2>
+        </div>
+
+        <div style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          gap: 6,
+          marginBottom: 52,
+          padding: "32px 24px",
+          background: styles.backgroundCard,
+          border: `1px solid ${styles.border}`,
+          borderRadius: 16,
+          boxShadow: styles.cardShadow,
+        }}>
+          {TECH_LOGOS.map(tech => (
+            <TechLogo key={tech.name} name={tech.name} src={tech.src} theme={theme} />
+          ))}
+        </div>
+
+        <div>
+          <p style={{ 
+            fontFamily: "'Fira Code', monospace", 
+            fontSize: 12, 
+            color: styles.textMuted, 
+            marginBottom: 24,
+          }}>
+            // proficiency
+          </p>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px,1fr))",
+            gap: 32,
+          }}>
+            <div>{SKILLS_BARS.slice(0,4).map(s => <SkillBar key={s.name} skill={s} visible={visible} theme={theme} />)}</div>
+            <div>{SKILLS_BARS.slice(4).map(s => <SkillBar key={s.name} skill={s} visible={visible} theme={theme} />)}</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── PROJECTS SECTION ──────────────────────────────────────────────────────
+
+function Projects({ onModalOpen, theme }) {
+  const [visible, setVisible] = useState([]);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const cardRefs = useRef([]);
+  const sectionRef = useRef(null);
+  const styles = getThemeStyles(theme);
+
+  useEffect(() => {
+    const observers = PROJECTS.map((_, i) => {
+      const el = cardRefs.current[i];
+      if (!el) return null;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => setVisible(prev => [...new Set([...prev, i])]), i * 100);
+            obs.disconnect();
+          }
+        },
+        { threshold: 0.1 }
+      );
+      obs.observe(el);
+      return obs;
+    });
+    return () => observers.forEach(o => o?.disconnect());
+  }, []);
+
+  return (
+    <section
+      id="projects"
+      ref={sectionRef}
+      aria-labelledby="projects-heading"
+      style={{ 
+        padding: "100px 28px", 
+        background: styles.background,
+        position: "relative",
+      }}
+    >
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ marginBottom: 40 }}>
+          <p style={{
+            fontSize: 11,
+            color: "#2563EB",
+            fontWeight: 700,
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            marginBottom: 10,
+            fontFamily: "'Fira Code', monospace",
+          }}>
+            What I've shipped
+          </p>
+          <h2 id="projects-heading" style={{
+            fontSize: "clamp(28px,4.5vw,40px)",
+            fontWeight: 900,
+            lineHeight: 1.1,
+            color: styles.text,
+            fontFamily: "'Space Grotesk', sans-serif",
+          }}>
+            Featured <span className="gradient-text">Projects</span>
+          </h2>
+          <p style={{ 
+            fontSize: 16, 
+            color: styles.textSecondary, 
+            maxWidth: 440,
+            lineHeight: 1.6,
+            marginTop: 8,
+          }}>
+            Click any card to explore the full case study with metrics and impact.
+          </p>
+        </div>
+
+        <div className="projects-grid">
+          {PROJECTS.map((project, index) => {
+            const isVisible = visible.includes(index);
+            const isHovered = hoveredIndex === index;
+
+            return (
+              <div
+                key={project.id}
+                ref={el => (cardRefs.current[index] = el)}
+                style={{
+                  opacity: isVisible ? 1 : 0,
+                  transform: isVisible ? "translateY(0)" : "translateY(30px)",
+                  transition: `all 0.6s ease ${index * 0.1}s`,
+                }}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+              >
+                <article
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Open case study: ${project.title}`}
+                  onClick={() => onModalOpen(project)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onModalOpen(project); } }}
+                  style={{
+                    background: styles.backgroundCard,
+                    border: `1px solid ${isHovered ? project.color + '44' : styles.border}`,
+                    borderRadius: 16,
+                    padding: "28px",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    transform: isHovered ? "translateY(-6px)" : "translateY(0)",
+                    boxShadow: isHovered ? styles.cardHoverShadow : styles.cardShadow,
+                    position: "relative",
+                    overflow: "hidden",
+                    height: "100%",
+                    minHeight: 260,
+                  }}
+                >
+                  <div style={{
+                    position: "absolute",
+                    top: 0,
+                    right: 0,
+                    width: "100%",
+                    height: "100%",
+                    background: `radial-gradient(ellipse at top right, ${project.color}04, transparent 60%)`,
+                    pointerEvents: "none",
+                  }} />
+
+                  <div className="project-card-inner" style={{ position: "relative", zIndex: 1 }}>
+                    <div style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 4,
+                    }}>
+                      <span style={{ fontSize: 34 }} role="img" aria-hidden="true">{project.icon}</span>
+                      <span style={{
+                        fontSize: 9,
+                        fontWeight: 700,
+                        color: project.color,
+                        background: `${project.color}10`,
+                        border: `1px solid ${project.color}15`,
+                        padding: "3px 10px",
+                        borderRadius: 99,
+                        display: "inline-block",
+                        textAlign: "center",
+                      }}>
+                        {project.type}
+                      </span>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div>
+                        <h3 style={{
+                          fontSize: 18,
+                          fontWeight: 800,
+                          color: styles.text,
+                          lineHeight: 1.2,
+                          fontFamily: "'Space Grotesk', sans-serif",
+                        }}>
+                          {project.title}
+                        </h3>
+                        <p style={{
+                          fontFamily: "'Fira Code', monospace",
+                          fontSize: 11,
+                          color: styles.textMuted,
+                          marginTop: 1,
+                        }}>
+                          {project.subtitle}
+                        </p>
+                      </div>
+
+                      <p style={{
+                        fontSize: 13,
+                        color: styles.textSecondary,
+                        lineHeight: 1.6,
+                      }}>
+                        {project.summary}
+                      </p>
+
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+                        {project.metrics?.slice(0, 2).map(m => (
+                          <span key={m} style={{
+                            fontSize: 9,
+                            fontWeight: 600,
+                            padding: "2px 10px",
+                            borderRadius: 4,
+                            background: `${project.color}08`,
+                            color: project.color,
+                          }}>
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="project-footer">
+                      <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+                        {project.isLive && project.liveUrl && (
+                          <a
+                            href={project.liveUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                              fontSize: 9,
+                              fontWeight: 700,
+                              padding: "4px 14px",
+                              borderRadius: 99,
+                              background: "#10B981",
+                              color: "#fff",
+                              textDecoration: "none",
+                              transition: "all 0.2s ease",
+                              border: "none",
+                              cursor: "pointer",
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.transform = "scale(1.04)";
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.transform = "scale(1)";
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <span>🔗</span>
+                            Live
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── PROJECT MODAL ──────────────────────────────────────────────────────────
+
+function ProjectModal({ project, onClose, theme }) {
+  const styles = getThemeStyles(theme);
+  const isDark = theme === 'dark';
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  if (!project) return null;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={`modal-title-${project.id}`}
+      style={{
+        position: "fixed", inset: 0, zIndex: 1000,
+        background: isDark ? "rgba(0,0,0,0.85)" : "rgba(255,255,255,0.9)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "20px",
+        backdropFilter: "blur(12px)",
+        animation: "fadeIn 0.25s ease",
+      }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        style={{
+          background: styles.backgroundCard,
+          border: `1px solid ${styles.border}`,
+          borderRadius: 20,
+          maxWidth: 700,
+          width: "100%",
+          maxHeight: "90vh",
+          overflowY: "auto",
+          padding: "36px 32px",
+          position: "relative",
+          animation: "scaleIn 0.3s ease",
+          boxShadow: styles.shadow,
+        }}
+      >
+        <button
+          onClick={onClose}
+          aria-label="Close modal"
+          style={{
+            position: "absolute", top: 14, right: 14,
+            background: isDark ? "rgba(255,255,255,0.04)" : "rgba(37,99,235,0.04)",
+            border: `1px solid ${styles.border}`,
+            color: styles.textMuted,
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            cursor: "pointer",
+            fontSize: 16,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "all 0.2s ease",
+          }}
+        >
+          ✕
+        </button>
+
+        <div style={{ display: "flex", gap: 16, alignItems: "flex-start", marginBottom: 24 }}>
+          <span style={{ fontSize: 40 }} role="img" aria-hidden="true">{project.icon}</span>
+          <div>
+            <div style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: project.color,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              marginBottom: 2,
+              fontFamily: "'Fira Code', monospace",
+            }}>
+              {project.subtitle}
+            </div>
+            <h2
+              id={`modal-title-${project.id}`}
+              style={{ 
+                fontSize: "clamp(22px,3.5vw,30px)", 
+                fontWeight: 900, 
+                color: styles.text, 
+                lineHeight: 1.15,
+                fontFamily: "'Space Grotesk', sans-serif",
+              }}
+            >
+              {project.title}
+            </h2>
+          </div>
+        </div>
+
+        {/* Project Mockup */}
+        <div className="modal-mockup" style={{
+          background: `${project.bgColor}`,
+          border: `1px solid ${project.color}12`,
+          borderRadius: 14,
+          padding: "24px",
+          marginBottom: 24,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: 140,
+          gap: 24,
+        }}>
+          <span style={{ fontSize: 56 }} aria-hidden="true">{project.screenshot}</span>
+          <div>
+            <p style={{ fontSize: 13, color: styles.textMuted, fontFamily: "'Fira Code', monospace" }}>
+              {project.mockup === 'mobile' ? '📱 Mobile App Mockup' : '🖥️ Web App Preview'}
+            </p>
+            <div style={{ display: "flex", gap: 16, marginTop: 8, flexWrap: "wrap" }}>
+              {project.metrics?.map((m, i) => (
+                <span key={i} style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: styles.textSecondary,
+                  background: isDark ? "rgba(255,255,255,0.04)" : "rgba(37,99,235,0.04)",
+                  padding: "4px 12px",
+                  borderRadius: 4,
+                  fontFamily: "'Fira Code', monospace",
+                }}>
+                  {m}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Problem, Solution, Impact */}
+        <div style={{ marginBottom: 24 }}>
+          <div className="modal-impact-grid" style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: 16,
+            marginBottom: 20,
+          }}>
+            <div style={{
+              background: isDark ? "rgba(255,255,255,0.03)" : "rgba(37,99,235,0.03)",
+              padding: "16px",
+              borderRadius: 12,
+              border: `1px solid ${styles.border}`,
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: styles.textMuted, marginBottom: 4 }}>Problem</div>
+              <p style={{ fontSize: 13, color: styles.textSecondary, lineHeight: 1.5 }}>{project.problem}</p>
+            </div>
+            <div style={{
+              background: isDark ? "rgba(255,255,255,0.03)" : "rgba(37,99,235,0.03)",
+              padding: "16px",
+              borderRadius: 12,
+              border: `1px solid ${styles.border}`,
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: styles.textMuted, marginBottom: 4 }}>Solution</div>
+              <p style={{ fontSize: 13, color: styles.textSecondary, lineHeight: 1.5 }}>{project.solution}</p>
+            </div>
+            <div style={{
+              background: isDark ? "rgba(255,255,255,0.03)" : "rgba(37,99,235,0.03)",
+              padding: "16px",
+              borderRadius: 12,
+              border: `1px solid ${styles.border}`,
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: styles.textMuted, marginBottom: 4 }}>Impact</div>
+              <p style={{ fontSize: 13, color: styles.textSecondary, lineHeight: 1.5 }}>{project.impact}</p>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <h3 style={{ 
+            fontSize: 11, 
+            fontWeight: 700, 
+            color: styles.textMuted, 
+            textTransform: "uppercase", 
+            letterSpacing: "0.08em", 
+            marginBottom: 10,
+            fontFamily: "'Fira Code', monospace",
+          }}>
+            Key Highlights
+          </h3>
+          <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+            {project.highlights.map(h => (
+              <li key={h} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <span style={{ color: project.color, marginTop: 2, flexShrink: 0 }}>▸</span>
+                <span style={{ fontSize: 14, color: styles.textSecondary, lineHeight: 1.6 }}>{h}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <h3 style={{ 
+            fontSize: 11, 
+            fontWeight: 700, 
+            color: styles.textMuted, 
+            textTransform: "uppercase", 
+            letterSpacing: "0.08em", 
+            marginBottom: 8,
+            fontFamily: "'Fira Code', monospace",
+          }}>
+            Tech Stack
+          </h3>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {project.stack.map(s => (
+              <span key={s} style={{
+                fontFamily: "'Fira Code', monospace",
+                fontSize: 12,
+                color: "#2563EB",
+                background: isDark ? "rgba(37,99,235,0.08)" : "rgba(37,99,235,0.04)",
+                border: `1px solid ${isDark ? "rgba(37,99,235,0.12)" : "rgba(37,99,235,0.08)"}`,
+                padding: "4px 12px",
+                borderRadius: 6,
+                fontWeight: 500,
+              }}>
+                {s}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ 
+          display: "flex", 
+          flexWrap: "wrap", 
+          gap: 10, 
+          paddingTop: 20, 
+          borderTop: `1px solid ${styles.border}`,
+        }}>
+          {project.liveUrl && (
+            <a
+              href={project.liveUrl}
+              target="_blank" rel="noopener noreferrer"
+              className="cta-primary"
+              style={{ fontSize: 13, padding: "10px 20px" }}
+            >
+              🚀 Live Demo ↗
+            </a>
+          )}
+
+          {project.playStoreUrl && (
+            <a
+              href={project.playStoreUrl}
+              target="_blank" rel="noopener noreferrer"
+              className="cta-secondary"
+              style={{ fontSize: 13, padding: "9px 18px" }}
+            >
+              📱 Play Store ↗
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── JOURNEY (Timeline) ──────────────────────────────────────────────────
+
+function Journey({ theme }) {
+  const styles = getThemeStyles(theme);
+
+  return (
+    <section
+      id="journey"
+      aria-labelledby="journey-heading"
+      style={{ 
+        padding: "100px 28px", 
+        background: styles.backgroundSecondary,
+        position: "relative",
+      }}
+    >
+      <div style={{ maxWidth: 960, margin: "0 auto", position: "relative", zIndex: 1 }}>
+        <div style={{ marginBottom: 40 }}>
+          <p style={{
+            fontSize: 11,
+            color: "#2563EB",
+            fontWeight: 700,
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            marginBottom: 10,
+            fontFamily: "'Fira Code', monospace",
+          }}>
+            My Journey
+          </p>
+          <h2 id="journey-heading" style={{
+            fontSize: "clamp(28px,4.5vw,40px)",
+            fontWeight: 900,
+            lineHeight: 1.1,
+            color: styles.text,
+            fontFamily: "'Space Grotesk', sans-serif",
+          }}>
+            Career <span className="gradient-text">Timeline</span>
+          </h2>
+        </div>
+
+        <div style={{ position: "relative" }}>
+          <div aria-hidden="true" style={{
+            position: "absolute",
+            left: 20,
+            top: 0,
+            bottom: 0,
+            width: 2,
+            background: `linear-gradient(180deg, #2563EB, #0EA5E9, ${theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)'})`,
+            borderRadius: 99,
+          }} />
+
+          {CAREER_TIMELINE.map((item, i) => (
+            <div 
+              key={i} 
+              style={{ 
+                display: "flex", 
+                gap: 24, 
+                marginBottom: 28,
+                animation: "slideIn 0.6s ease",
+                animationDelay: `${i * 0.15}s`,
+                opacity: 0,
+                animationFillMode: "forwards",
+              }}
+            >
+              <div
+                aria-hidden="true"
+                style={{
+                  flexShrink: 0,
+                  width: 42,
+                  height: 42,
+                  borderRadius: "50%",
+                  background: `linear-gradient(135deg, ${item.color}, ${item.color}77)`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 18,
+                  zIndex: 1,
+                  boxShadow: `0 0 30px ${item.color}22`,
+                }}
+              >
+                {item.type === "work" ? "💼" : "🎓"}
+              </div>
+
+              <div style={{
+                flex: 1,
+                background: styles.backgroundCard,
+                border: `1px solid ${styles.border}`,
+                borderRadius: 16,
+                padding: "24px 28px",
+                transition: "all 0.3s ease",
+                boxShadow: styles.cardShadow,
+              }}
+              onMouseEnter={e => { 
+                e.currentTarget.style.borderColor = `${item.color}44`;
+                e.currentTarget.style.transform = "translateX(6px)";
+              }}
+              onMouseLeave={e => { 
+                e.currentTarget.style.borderColor = styles.border;
+                e.currentTarget.style.transform = "translateX(0)";
+              }}
+              >
+                <div style={{ 
+                  display: "flex", 
+                  justifyContent: "space-between", 
+                  flexWrap: "wrap", 
+                  gap: 8, 
+                  marginBottom: 8,
+                  alignItems: "center",
+                }}>
+                  <span style={{ 
+                    fontFamily: "'Fira Code', monospace", 
+                    fontSize: 12, 
+                    color: item.color, 
+                    fontWeight: 600,
+                  }}>
+                    {item.year}
+                  </span>
+                </div>
+                <h3 style={{ 
+                  fontSize: 18, 
+                  fontWeight: 800, 
+                  color: styles.text, 
+                  marginBottom: 2,
+                  fontFamily: "'Space Grotesk', sans-serif",
+                }}>
+                  {item.title}
+                </h3>
+                <p style={{ 
+                  fontSize: 14, 
+                  color: item.color, 
+                  fontWeight: 600, 
+                  marginBottom: 8 
+                }}>
+                  {item.org}
+                </p>
+                <p style={{ 
+                  fontSize: 14, 
+                  color: styles.textSecondary, 
+                  lineHeight: 1.7 
+                }}>
+                  {item.desc}
+                </p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+                  {item.achievements.map((ach, idx) => (
+                    <span key={idx} style={{
+                      fontSize: 11,
+                      color: styles.textSecondary,
+                      background: theme === 'dark' ? "rgba(255,255,255,0.04)" : "rgba(37,99,235,0.04)",
+                      border: `1px solid ${styles.border}`,
+                      padding: "4px 12px",
+                      borderRadius: 6,
+                      fontWeight: 500,
+                    }}>
+                      {ach}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── ACHIEVEMENTS ──────────────────────────────────────────────────────────
+
+function Achievements({ theme }) {
+  const styles = getThemeStyles(theme);
+
+  return (
+    <section
+      id="achievements"
+      aria-labelledby="achievements-heading"
+      style={{ 
+        padding: "100px 28px", 
+        background: styles.background,
+        position: "relative",
+      }}
+    >
+      <div style={{ maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
+        <div style={{ marginBottom: 40 }}>
+          <p style={{
+            fontSize: 11,
+            color: "#2563EB",
+            fontWeight: 700,
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            marginBottom: 10,
+            fontFamily: "'Fira Code', monospace",
+          }}>
+            Recognition
+          </p>
+          <h2 id="achievements-heading" style={{
+            fontSize: "clamp(28px,4.5vw,40px)",
+            fontWeight: 900,
+            lineHeight: 1.1,
+            color: styles.text,
+            fontFamily: "'Space Grotesk', sans-serif",
+          }}>
+            Achievements & <span className="gradient-text">Awards</span>
+          </h2>
+        </div>
+
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(240px,1fr))",
+          gap: 20,
+        }}>
+          {ACHIEVEMENTS.map((ach, i) => (
+            <div
+              key={i}
+              style={{
+                background: styles.backgroundCard,
+                border: `1px solid ${styles.border}`,
+                borderRadius: 14,
+                padding: "24px 20px",
+                transition: "all 0.3s ease",
+                boxShadow: styles.cardShadow,
+                textAlign: "center",
+              }}
+              onMouseEnter={e => { 
+                e.currentTarget.style.borderColor = "rgba(37,99,235,0.2)";
+                e.currentTarget.style.transform = "translateY(-4px)";
+              }}
+              onMouseLeave={e => { 
+                e.currentTarget.style.borderColor = styles.border;
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              <span style={{ fontSize: 32, display: "block", marginBottom: 12 }}>{ach.icon}</span>
+              <h3 style={{ 
+                fontSize: 15, 
+                fontWeight: 700, 
+                color: styles.text, 
+                marginBottom: 6,
+                fontFamily: "'Space Grotesk', sans-serif",
+              }}>
+                {ach.title}
+              </h3>
+              <p style={{ 
+                fontSize: 13, 
+                color: styles.textSecondary, 
+                lineHeight: 1.6 
+              }}>
+                {ach.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 40 }}>
+          <h3 style={{ 
+            fontSize: 18, 
+            fontWeight: 700, 
+            color: styles.text, 
+            marginBottom: 16,
+            fontFamily: "'Space Grotesk', sans-serif",
+          }}>
+            Certifications
+          </h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {CERTIFICATIONS.map((c, i) => (
+              <a
+                key={i}
+                href={c.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16,
+                  background: styles.backgroundCard,
+                  border: `1px solid ${styles.border}`,
+                  borderRadius: 12,
+                  padding: "16px 20px",
+                  textDecoration: "none",
+                  transition: "all 0.3s ease",
+                  boxShadow: styles.cardShadow,
+                }}
+                onMouseEnter={e => { 
+                  e.currentTarget.style.borderColor = "#2563EB";
+                  e.currentTarget.style.transform = "translateX(6px)";
+                }}
+                onMouseLeave={e => { 
+                  e.currentTarget.style.borderColor = styles.border;
+                  e.currentTarget.style.transform = "translateX(0)";
+                }}
+              >
+                <span style={{ fontSize: 22 }} role="img" aria-hidden="true">{c.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ 
+                    fontSize: 15, 
+                    fontWeight: 700, 
+                    color: styles.text,
+                    fontFamily: "'Space Grotesk', sans-serif",
+                  }}>
+                    {c.name}
+                  </div>
+                  <div style={{ 
+                    fontFamily: "'Fira Code', monospace", 
+                    fontSize: 11, 
+                    color: styles.textMuted, 
+                    marginTop: 2 
+                  }}>
+                    {c.issuer}
+                  </div>
+                </div>
+                <span style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: "#2563EB",
+                  background: theme === 'dark' ? "rgba(37,99,235,0.08)" : "rgba(37,99,235,0.04)",
+                  border: `1px solid ${theme === 'dark' ? "rgba(37,99,235,0.12)" : "rgba(37,99,235,0.08)"}`,
+                  padding: "4px 14px",
+                  borderRadius: 99,
+                }}>
+                  Verified
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+// ─── GITHUB STATS ──────────────────────────────────────────────────────────
+
+function GitHubStats({ theme }) {
+  const styles = getThemeStyles(theme);
+
+  return (
+    <section
+      id="github"
+      aria-labelledby="github-heading"
+      style={{ 
+        padding: "100px 28px", 
+        background: styles.background,
+        position: "relative",
+      }}
+    >
+      <div style={{ maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
+        <div style={{ marginBottom: 40 }}>
+          <p style={{
+            fontSize: 11,
+            color: "#2563EB",
+            fontWeight: 700,
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            marginBottom: 10,
+            fontFamily: "'Fira Code', monospace",
+          }}>
+            Open Source
+          </p>
+          <h2 id="github-heading" style={{
+            fontSize: "clamp(28px,4.5vw,40px)",
+            fontWeight: 900,
+            lineHeight: 1.1,
+            color: styles.text,
+            fontFamily: "'Space Grotesk', sans-serif",
+          }}>
+            GitHub <span className="gradient-text">Contributions</span>
+          </h2>
+        </div>
+
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(150px,1fr))",
+          gap: 16,
+        }}>
+          {[
+            { label: "Repositories", value: GITHUB_STATS.repos },
+            { label: "Stars", value: GITHUB_STATS.stars },
+            { label: "Forks", value: GITHUB_STATS.forks },
+            { label: "Contributions", value: GITHUB_STATS.contributions },
+          ].map((stat, i) => (
+            <div
+              key={i}
+              style={{
+                background: styles.backgroundCard,
+                border: `1px solid ${styles.border}`,
+                borderRadius: 12,
+                padding: "20px 16px",
+                textAlign: "center",
+                transition: "all 0.3s ease",
+                boxShadow: styles.cardShadow,
+              }}
+              onMouseEnter={e => { 
+                e.currentTarget.style.borderColor = "rgba(37,99,235,0.2)";
+                e.currentTarget.style.transform = "translateY(-4px)";
+              }}
+              onMouseLeave={e => { 
+                e.currentTarget.style.borderColor = styles.border;
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              <div style={{ 
+                fontSize: "clamp(24px,3vw,32px)", 
+                fontWeight: 900, 
+                color: "#2563EB",
+                lineHeight: 1,
+              }}>
+                {stat.value}
+              </div>
+              <div style={{ 
+                fontSize: 12, 
+                color: styles.textMuted, 
+                marginTop: 6,
+                fontWeight: 500,
+              }}>
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 24, textAlign: "center" }}>
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cta-secondary"
+            style={{ fontSize: 14, padding: "10px 24px" }}
+          >
+            View GitHub Profile →
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── CONTACT ─────────────────────────────────────────────────────────────────
+
+function Contact({ theme }) {
+  const styles = getThemeStyles(theme);
+
+  const contactInfo = [
+    { icon: "✉", label: "Email", val: "bethi.sai19@gmail.com", href: "mailto:bethi.sai19@gmail.com" },
+    { icon: "📞", label: "Phone", val: "+91 6305735728", href: "tel:+916305735728" },
+    { icon: "📍", label: "Location", val: "Hyderabad, India", href: "#" },
+    { icon: "🌐", label: "Website", val: "GlobalSparkTek Solutions", href: "https://www.globalsparkteksolutions.com" },
+    { icon: "⏰", label: "Availability", val: "Open to opportunities", href: "#" },
+  ];
+
+  return (
+    <section
+      id="contact"
+      aria-labelledby="contact-heading"
+      style={{ 
+        padding: "100px 28px", 
+        background: styles.backgroundSecondary,
+        position: "relative",
+      }}
+    >
+      <div style={{ maxWidth: 700, margin: "0 auto", position: "relative", zIndex: 1 }}>
+        <div style={{ marginBottom: 40, textAlign: "center" }}>
+          <p style={{
+            fontSize: 11,
+            color: "#2563EB",
+            fontWeight: 700,
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            marginBottom: 10,
+            fontFamily: "'Fira Code', monospace",
+          }}>
+            Let's build together
+          </p>
+          <h2 id="contact-heading" style={{
+            fontSize: "clamp(32px,5vw,44px)",
+            fontWeight: 900,
+            lineHeight: 1.08,
+            color: styles.text,
+            fontFamily: "'Space Grotesk', sans-serif",
+          }}>
+            Got a project<br />
+            <span className="gradient-text">in mind?</span>
+          </h2>
+          <p style={{ 
+            fontSize: 16, 
+            color: styles.textSecondary, 
+            lineHeight: 1.7, 
+            maxWidth: 420,
+            margin: "8px auto 0",
+          }}>
+            Whether it's a startup MVP, a mobile app, or scaling an enterprise system — let's make it happen.
+          </p>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {contactInfo.map((c, i) => (
+            <a 
+              key={i} 
+              href={c.href} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                background: styles.backgroundCard,
+                border: `1px solid ${styles.border}`,
+                borderRadius: 12,
+                padding: "16px 20px",
+                textDecoration: "none",
+                transition: "all 0.3s ease",
+                boxShadow: styles.cardShadow,
+              }}
+              onMouseEnter={e => { 
+                e.currentTarget.style.borderColor = "rgba(37,99,235,0.3)";
+                e.currentTarget.style.transform = "translateX(6px)";
+              }}
+              onMouseLeave={e => { 
+                e.currentTarget.style.borderColor = styles.border;
+                e.currentTarget.style.transform = "translateX(0)";
+              }}
+            >
+              <span style={{ 
+                fontSize: 18, 
+                width: 28, 
+                textAlign: "center",
+                flexShrink: 0,
+              }} aria-hidden="true">
+                {c.icon}
+              </span>
+              <div style={{ flex: 1 }}>
+                <div style={{ 
+                  fontSize: 10, 
+                  color: styles.textMuted, 
+                  fontWeight: 700, 
+                  textTransform: "uppercase", 
+                  letterSpacing: "0.06em",
+                  fontFamily: "'Fira Code', monospace",
+                }}>
+                  {c.label}
+                </div>
+                <div style={{ 
+                  fontSize: 14, 
+                  color: "#2563EB", 
+                  fontWeight: 600, 
+                  marginTop: 2,
+                  fontFamily: "'Space Grotesk', sans-serif",
+                }}>
+                  {c.val}
+                </div>
+              </div>
+              <span style={{ color: styles.textMuted, fontSize: 18 }}>↗</span>
+            </a>
+          ))}
+        </div>
+
+        <div style={{
+          display: "flex",
+          gap: 12,
+          marginTop: 24,
+          justifyContent: "center",
+          flexWrap: "wrap",
+        }}>
+          <a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer" className="cta-secondary" style={{ fontSize: 13, padding: "10px 20px" }}>
+            in LinkedIn
+          </a>
+          <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="cta-secondary" style={{ fontSize: 13, padding: "10px 20px" }}>
+            ⌥ GitHub
+          </a>
+          <a href={RESUME_URL} target="_blank" rel="noopener noreferrer" className="cta-primary" style={{ fontSize: 13, padding: "10px 20px" }}>
+            📄 Resume
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── EASTER EGG ─────────────────────────────────────────────────────────────
+
+function EasterEgg({ onClose, theme }) {
+  const styles = getThemeStyles(theme);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Easter egg"
+      style={{
+        position: "fixed", inset: 0, zIndex: 9998,
+        background: theme === 'dark' ? "rgba(0,0,0,0.9)" : "rgba(255,255,255,0.95)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        backdropFilter: "blur(12px)",
+        animation: "fadeIn 0.3s ease",
+      }}
+      onClick={onClose}
+    >
+      <div style={{
+        textAlign: "center",
+        fontFamily: "'Space Grotesk', sans-serif",
+        animation: "scaleIn 0.4s ease",
+        padding: 40,
+      }}>
+        <div style={{ fontSize: 64, marginBottom: 20 }}>🎮</div>
+        <div style={{ 
+          fontSize: 24, 
+          color: "#10B981", 
+          fontWeight: 700, 
+          marginBottom: 8,
+          fontFamily: "'Space Grotesk', sans-serif",
+        }}>
+          🎉 You found the easter egg!
+        </div>
+        <div style={{ 
+          fontSize: 14, 
+          color: styles.textMuted, 
+          marginBottom: 24,
+          fontFamily: "'Fira Code', monospace",
+        }}>
+          // Konami code unlocked. Nice reflexes.
+        </div>
+        <div style={{ 
+          fontSize: 13, 
+          color: styles.text,
+          fontFamily: "'Fira Code', monospace",
+        }}>
+          &gt; console.log("crafted with ♥ by Sai Bethi")
+        </div>
+        <div style={{ 
+          fontSize: 12, 
+          color: styles.textMuted, 
+          marginTop: 32,
+          opacity: 0.5,
+        }}>
+          click anywhere to close
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ROOT ─────────────────────────────────────────────────────────────────────
+
+function PortfolioContent() {
+  const { theme, toggleTheme } = useTheme();
+  const [activeNav, setActiveNav] = useState("About");
+  const [modal, setModal] = useState(null);
+  const [easterEgg, setEasterEgg] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const konamiRef = useRef([]);
+
+  // Simulate loading
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.replace("#", "");
+      if (!hash) return;
+      const [section, projectId] = hash.split("/");
+      const el = document.getElementById(section.toLowerCase());
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+      if (projectId) {
+        const found = PROJECTS.find(p => p.id === projectId);
+        if (found) setTimeout(() => setModal(found), 600);
+      }
+    };
+    handleHash();
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
+
+  useEffect(() => {
+    const sections = ["about", "skills", "projects", "journey", "achievements", "github", "contact"];
+    const observers = sections.map(id => {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveNav(id.charAt(0).toUpperCase() + id.slice(1)); },
+        { threshold: 0.3 }
+      );
+      obs.observe(el);
+      return obs;
+    });
+    return () => observers.forEach(o => o?.disconnect());
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      konamiRef.current = [...konamiRef.current, e.key].slice(-10);
+      if (konamiRef.current.join(",") === ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"].join(",")) {
+        setEasterEgg(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const handleNav = useCallback((link) => {
+    const id = link.toLowerCase();
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    setActiveNav(link);
+    window.history.replaceState(null, "", `#${id}`);
+  }, []);
+
+  const openModal = useCallback((project) => {
+    setModal(project);
+    window.history.replaceState(null, "", `#projects/${project.id}`);
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setModal(null);
+    window.history.replaceState(null, "", "#projects");
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape" && drawerOpen) setDrawerOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [drawerOpen]);
+
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [drawerOpen]);
+
+  if (loading) {
+    return (
+      <>
+        <FontLink />
+        <SkeletonLoader />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <FontLink />
+
+      <div>
+        <Navbar 
+          active={activeNav} 
+          onNav={handleNav} 
+          theme={theme} 
+          toggleTheme={toggleTheme}
+          onDrawerOpen={() => setDrawerOpen(true)}
+        />
+
+        <SideDrawer
+          isOpen={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          active={activeNav}
+          onNav={handleNav}
+          theme={theme}
+        />
+
+        <main id="main-content">
+          <Hero onNav={handleNav} theme={theme} />
+          <div className="section-divider" />
+          <Skills theme={theme} />
+          <div className="section-divider" />
+          <Projects onModalOpen={openModal} theme={theme} />
+          <div className="section-divider" />
+          <Journey theme={theme} />
+          <div className="section-divider" />
+          <Achievements theme={theme} />
+          <div className="section-divider" />
+          <GitHubStats theme={theme} />
+          <div className="section-divider" />
+          <Contact theme={theme} />
+        </main>
+
+        <footer style={{
+          background: theme === 'dark' ? '#06060A' : '#F8FAFC',
+          borderTop: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(37,99,235,0.04)'}`,
+          padding: "32px 28px",
+          textAlign: "center",
+        }}>
+          <div style={{ 
+            fontFamily: "'Fira Code', monospace", 
+            fontSize: 12, 
+            color: theme === 'dark' ? '#64748B' : '#94A3B8',
+            marginBottom: 4,
+          }}>
+            console.log("crafted with ♥ + React by Sai Bethi · 2025");
+          </div>
+          <div style={{ 
+            fontSize: 10, 
+            color: theme === 'dark' ? '#1A1A2E' : '#CBD5E1',
+            opacity: 0.6,
+          }}>
+            ↑ try the konami code for a surprise
+          </div>
+        </footer>
+      </div>
+
+      {modal && <ProjectModal project={modal} onClose={closeModal} theme={theme} />}
+      {easterEgg && <EasterEgg onClose={() => setEasterEgg(false)} theme={theme} />}
+    </>
+  );
+}
+
+export default function Portfolio() {
+  return (
+    <ThemeProvider>
+      <PortfolioContent />
+    </ThemeProvider>
+  );
+}
