@@ -3,7 +3,7 @@
  * 
  */
 
-import { useState, useEffect, useRef, useCallback, createContext, useContext, Suspense, lazy } from "react";
+import { useState, useEffect, useRef, useCallback, createContext, useContext, lazy } from "react";
 import profileImage from "./Assets/saibethi.jpeg";
 
 // ─── THEME CONTEXT ──────────────────────────────────────────────────────────
